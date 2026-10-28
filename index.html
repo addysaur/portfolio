@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:,">
+<title>ADVAIT — Liminal Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#d6c26a; --paper:#efe9d0;
+  --panel:rgba(14,13,7,.87); --panel-line:rgba(214,194,106,.45);
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace; --sans:'Archivo',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#171503;color:var(--paper);font-family:var(--sans);overflow-x:hidden}
+::selection{background:var(--yellow);color:#000}
+#scene{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+#vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 52%,rgba(0,0,0,.5) 100%)}
+#grain{position:fixed;inset:0;z-index:1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")}
+.hud{position:fixed;z-index:20;font-family:var(--mono);pointer-events:none}
+.hud-tl{top:14px;left:14px;max-width:46vw}
+.hud-tr{top:14px;right:14px;text-align:right;max-width:46vw}
+.hud .box{border:1px solid var(--panel-line);background:rgba(10,9,4,.74);backdrop-filter:blur(6px);padding:9px 11px}
+.hud small{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#b9b090;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud strong{font-size:13px;letter-spacing:.04em;color:#fff}
+#levelName{color:var(--yellow)}
+.hud-bl{bottom:14px;left:14px;max-width:210px}
+.hud-bl p{display:none}
+.hud-br{bottom:14px;right:14px;width:142px}
+section:first-of-type{align-items:flex-start;padding-top:13vh}
+.depth-track{height:6px;background:rgba(255,255,255,.15);margin-top:7px;overflow:hidden}
+.depth-fill{height:100%;width:0%;background:var(--yellow)}
+.rec{display:inline-flex;align-items:center;gap:7px}
+.dot{width:8px;height:8px;border-radius:50%;background:#ff3b30;animation:blink 1.4s steps(1) infinite;flex:none}
+@keyframes blink{50%{opacity:.15}}
+#world{position:relative;z-index:5}
+section{min-height:135vh;display:flex;align-items:center;padding:18vh 6vw}
+.inner{width:100%;max-width:1180px;margin:0 auto}
+.panel{background:var(--panel);border:1px solid var(--panel-line);padding:clamp(20px,3.4vw,38px);backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,.55);opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.panel.in{opacity:1;transform:none}
+.panel.right{margin-left:auto;max-width:620px}
+.panel.left{margin-right:auto;max-width:620px}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.kicker::before{content:"";width:26px;height:1px;background:var(--yellow);flex:none}
+h1{margin:.15em 0 .1em;font-size:clamp(3.2rem,10vw,7.5rem);line-height:.88;letter-spacing:-.03em;text-transform:uppercase;font-weight:900}
+h1 em{font-style:normal;color:transparent;-webkit-text-stroke:2px var(--yellow)}
+h2{margin:.2em 0 .35em;font-size:clamp(1.9rem,5vw,3.6rem);line-height:.95;text-transform:uppercase;letter-spacing:-.02em}
+h3{margin:0 0 .4em;font-size:1.05rem;text-transform:uppercase;letter-spacing:.02em}
+p{line-height:1.65;color:#ddd8c2;max-width:62ch}
+.lede{font-size:clamp(1.02rem,2vw,1.3rem);color:#fff}
+.meta{font-family:var(--mono);font-size:12px;line-height:1.9;color:#b9b090;text-transform:uppercase;letter-spacing:.08em}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+a.btn{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:#0d0c06;background:var(--yellow);padding:13px 18px;border:1px solid var(--yellow);font-weight:700}
+a.btn.ghost{background:transparent;color:var(--paper)}
+a.btn:hover{filter:brightness(1.12)}
+.dims{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}
+.dim{border:1px solid rgba(255,255,255,.14);padding:14px}
+.dim b{display:block;font-size:1.7rem;color:#fff}
+.dim span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b9b090}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.card{border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.03);padding:20px;transition:transform .25s ease,border-color .25s ease}
+.card:hover{transform:translateY(-4px);border-color:var(--yellow)}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--yellow)}
+.card p{font-size:.93rem;margin:.4em 0 0}
+.bar-row{margin:16px 0}
+.bar-top{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.bar{height:8px;background:rgba(255,255,255,.12);margin-top:7px}
+.bar i{display:block;height:100%;width:0;background:var(--yellow);transition:width 1s ease}
+.panel.in .bar i{width:var(--w)}
+.tl{border-left:1px solid var(--panel-line);margin-top:10px}
+.tl div{position:relative;padding:0 0 22px 22px}
+.tl div::before{content:"";position:absolute;left:-5px;top:5px;width:9px;height:9px;background:var(--yellow);border-radius:50%}
+.tl time{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--yellow);text-transform:uppercase}
+.tl p{margin:.3em 0 0;font-size:.94rem}
+.warning{border:1px dashed #c94f38;color:#ffb4a3;font-family:var(--mono);font-size:12px;line-height:1.7;padding:14px;margin-top:18px;text-transform:uppercase;letter-spacing:.06em}
+.exit-sign{display:inline-block;background:#1d7a3a;color:#fff;font-family:var(--mono);font-weight:700;letter-spacing:.2em;padding:10px 18px;text-transform:uppercase;box-shadow:0 0 34px rgba(46,204,113,.45)}
+footer{position:relative;z-index:5;padding:26px 6vw 120px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#a19c86;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+body.glitching #scene{animation:gshake .1s steps(2) infinite;filter:saturate(1.35) contrast(1.08)}
+@keyframes gshake{0%{transform:translate(0,0)}25%{transform:translate(-7px,2px)}50%{transform:translate(6px,-3px)}75%{transform:translate(-4px,-2px)}100%{transform:translate(5px,3px)}}
+body.glitching .hud .box{outline:1px solid rgba(255,60,40,.55)}
+.danger-panel{border-color:rgba(255,70,45,.65)}
+.danger-panel .kicker{color:#ff6a4d}
+.danger-panel .kicker::before{background:#ff6a4d}
+.hint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:20;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.2);padding:9px 14px;pointer-events:none;transition:opacity .4s;white-space:nowrap}
+@media(max-width:760px){
+  section{padding:15vh 14px;min-height:128vh}
+  .grid,.dims{grid-template-columns:1fr}
+  .hud-bl{display:none}
+  .hud-br{width:104px}
+  .hud-br small{display:none}
+  .hud-br .box{padding:7px 9px}
+  .hud strong{font-size:11px}
+  .panel.right,.panel.left{margin:0;max-width:none}
+  .hint{bottom:auto;top:86px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="vignette"></div><div id="grain"></div>
+
+<div class="hud hud-tl"><div class="box"><small>Entity / File</small><strong>ADVAIT “ADDY”</strong><small style="margin-top:5px">B.Tech AI &amp; ML — NST</small></div></div>
+<div class="hud hud-tr"><div class="box"><small>Current Dimension</small><strong id="levelName">LEVEL 0 — THE LOBBY</strong><small id="coords" style="margin-top:5px">X 0.0 · Y 1.6 · Z 0.0</small></div></div>
+<div class="hud hud-bl"><div class="box"><span class="rec"><span class="dot"></span><small style="display:inline">REC — CAM 04 · LIMINAL FEED</small></span></div></div>
+<div class="hud hud-br"><div class="box"><small>Depth / Noclip</small><strong id="depthTxt">0%</strong><div class="depth-track"><div class="depth-fill" id="depthFill"></div></div></div></div>
+<div class="hint" id="hint">↓ Scroll to travel in 3D ↓</div>
+
+<main id="world">
+  <section data-level="LEVEL 0 — THE LOBBY" data-theme="0">
+    <div class="inner"><div class="panel left">
+      <div class="kicker">You noclipped out of reality</div>
+      <h1>Advait<br><em>Addy</em></h1>
+      <p class="lede">First-year B.Tech AI &amp; ML builder wandering the Backrooms — shipping AI tools, hackathon builds and video edits from somewhere between Level 0 and the exit.</p>
+      <p class="meta">Newton School of Technology · Turing Batch · Lab Lambda<br>GitHub: Addysaur · Instagram: @whattfduo_</p>
+      <p class="meta">Entities on this level — Bacteria (roams the halls) · Smiler (appears in the dark)</p>
+      <div class="dims">
+        <div class="dim"><b>4</b><span>Builds in the archive</span></div>
+        <div class="dim"><b>2</b><span>Hackathons survived</span></div>
+        <div class="dim"><b>1</b><span>XERJ Corpus Hub pick</span></div>
+      </div>
+      <div class="btns"><a class="btn" href="#projects">Enter the archive ↓</a><a class="btn ghost" href="#exit">Find the exit</a></div>
+    </div></div>
+  </section>
+
+  <section data-level="LEVEL 1 — CONCRETE HALLS" data-theme="1">
+    <div class="inner"><div class="panel right">
+      <div class="kicker">Level 1 · The Concrete Halls</div>
+      <h2>About the wanderer</h2>
+      <p>The lights got dimmer. The wallpaper is gone. This is where the real work happens — Python, machine learning fundamentals, and learning to build things that actually run locally, offline, for real people.</p>
+      <p>Addy joined Newton School of Technology in August 2026 for a 4-year B.Tech in AI &amp; ML. Between lectures he builds: a pesticide-label reader for Indian farmers, a surplus-food rescue matcher, digital products on Gumroad, and edits for the FrameDrop society and the MMA club camera crew.</p>
+      <p class="meta">Focus — Python · Local LLMs · FastAPI · Streamlit<br>Also — DaVinci Resolve · FL Studio · Calisthenics</p>
+      <p class="meta">Entity on this level — Skin-Stealer (afraid of the light, aggressive in darkness)</p>
+    </div></div>
+  </section>
+
+  <section id="projects" data-level="LEVEL 2 — THE ARCHIVE" data-theme="2" style="min-height:175vh">
+    <div class="inner"><div class="panel">
+      <div class="kicker">Level 2 · Pipe Corridor Archive</div>
+      <h2>Collected in the dark</h2>
+      <p>Four objects recovered from deeper levels. Each one is real, shipped, and documented.</p>
+      <p class="meta">Entity on this level — Scratcher (blind — it hunts by sound, move quietly)</p>
+      <div class="grid">
+        <article class="card"><span class="tag">AI · Hacktoberfest · Selected for XERJ Corpus Hub</span><h3>KisanLabel</h3><p>Pesticide Label Reader for Indian farmers. Photograph a label → Gemma extracts it, Python does the dose maths (verified: 40.0 ml for 2.5 ml/L in 16 L), soil cautions included. Final version runs fully local via Ollama gemma3:4b — no API key, offline once pulled. Team of 4, merged to main via PR #4, then selected for XERJ's public Corpus Hub under MIT with attribution.</p></article>
+        <article class="card"><span class="tag">AI · CoNSTruct 2.0 · Track A</span><h3>RescueRoute AI</h3><p>Time-sensitive surplus-food rescue: matches donors (restaurants, college canteens) to NGOs by pickup feasibility before the safe deadline, with backup re-routing if a pickup fails. Built for an NGO coordinator in Pune, FSSAI 2019 surplus-food safety built in. Team: Real Spooky Wooky.</p></article>
+        <article class="card"><span class="tag">Digital Product · Gumroad · ₹199</span><h3>The College Prompt Pack</h3><p>40 AI prompts written for Indian college students — launched 29 Sep 2026 as product #1 of Addy's Gumroad side hustle. Small, practical, and actually sold as a real product, not a demo.</p></article>
+        <article class="card"><span class="tag">Video · DaVinci Resolve · FrameDrop</span><h3>Edits &amp; FrameDrop</h3><p>Reels on @whattfduo_, a 3D Fusion camera lyric edit, and the chrome / holographic brand system for FrameDrop — the society of editors, motion designers and cinematographers. Tagline: CUT DIFFERENT. Also core-committee videographer for the MMA club.</p></article>
+      </div>
+    </div></div>
+  </section>
+
+  <section data-level="LEVEL 3 — THE POOLROOMS" data-theme="3">
+    <div class="inner"><div class="panel left">
+      <div class="kicker">Level 3 · The Poolrooms</div>
+      <h2>Systems check</h2>
+      <p style="margin-bottom:6px">White tile. Still water. No hum here — just an honest readout of what's loaded so far in year one.</p>
+      <div class="bar-row"><div class="bar-top"><span>Python</span><span>Core language</span></div><div class="bar"><i style="--w:82%"></i></div></div>
+      <div class="bar-row"><div class="bar-top"><span>AI / ML &amp; Local LLMs (Ollama · Gemma)</span><span>Building</span></div><div class="bar"><i style="--w:68%"></i></div></div>
+      <div class="bar-row"><div class="bar-top"><span>FastAPI · Streamlit · Git / GitHub</span><span>Shipping</span></div><div class="bar"><i style="--w:64%"></i></div></div>
+      <div class="bar-row"><div class="bar-top"><span>DaVinci Resolve · Fusion</span><span>Advanced</span></div><div class="bar"><i style="--w:86%"></i></div></div>
+      <div class="bar-row"><div class="bar-top"><span>JavaScript · HTML / CSS</span><span>Growing</span></div><div class="bar"><i style="--w:52%"></i></div></div>
+      <p class="meta">Entity on this level — Hydrolitis Plague, dormant in the dark water. No hunter here; this level is mostly safe.</p>
+      <div class="warning">⚠ Self-reported weak zones — maths &amp; terminal / command line. Currently being patched, one rep at a time.</div>
+    </div></div>
+  </section>
+
+  <section data-level="LEVEL 4 — THE STAIRWELL" data-theme="4" style="min-height:155vh">
+    <div class="inner"><div class="panel right">
+      <div class="kicker">Level 4 · The Stairwell</div>
+      <h2>How deep he's gone</h2>
+      <p class="meta">Entity on this level — Duller (slow, patient, always somewhere behind you)</p>
+      <div class="tl">
+        <div><time>Aug 2026</time><h3>Entered the building</h3><p>Starts B.Tech AI &amp; ML at Newton School of Technology. First day: spoke in front of ~40 people.</p></div>
+        <div><time>Sep 2026</time><h3>First products &amp; societies</h3><p>Launches The College Prompt Pack on Gumroad, joins MMA club core committee as videographer, brands FrameDrop.</p></div>
+        <div><time>21 Oct 2026</time><h3>RescueRoute AI</h3><p>Picks his own idea for CoNSTruct 2.0 — surplus-food rescue matching — and finalises the 7-slide deck with Team Real Spooky Wooky.</p></div>
+        <div><time>24 Oct 2026</time><h3>KisanLabel — Hacktoberfest</h3><p>Builds the pesticide label reader in a team of 4; pivots overnight from Gemini API to fully local Ollama Gemma after judges require open-source local models.</p></div>
+        <div><time>27 Oct 2026</time><h3>XERJ Corpus Hub</h3><p>KisanLabel confirmed for inclusion in XERJ's public Corpus Hub — team agrees, confirmation sent.</p></div>
+      </div>
+    </div></div>
+  </section>
+
+  <section data-level="LEVEL ! — RUN FOR YOUR LIFE" data-theme="5" style="min-height:150vh">
+    <div class="inner"><div class="panel right danger-panel">
+      <div class="kicker">Level ! · Run For Your Life</div>
+      <h2>The Red Room</h2>
+      <p>The corridor turns hospital-white — then the alarms start, the strobes kick in, and everything goes red. This is the most dangerous stretch of the whole tape. A horde hunts here: Hounds, Skin-Stealers and Facelings, led by a Mutant Smiler whose grin is the last thing most wanderers ever see.</p>
+      <p>There is nothing to collect in this room. No project, no skill, no story. The entities here don't patrol — they pursue. The only objective is the glowing green door at the far end. Do not stop scrolling.</p>
+      <div class="warning">⚠ Entity horde active — Hound · Skin-Stealer · Faceling · Mutant Smiler. If the screen tears and the strobes speed up, they are close. Keep moving.</div>
+    </div></div>
+  </section>
+
+  <section id="exit" data-level="THE EXIT — SURFACE" data-theme="6" style="min-height:115vh">
+    <div class="inner"><div class="panel" style="text-align:center;max-width:720px;margin:0 auto">
+      <span class="exit-sign">EXIT →</span>
+      <h2 style="margin-top:20px">You found the door</h2>
+      <p style="margin-left:auto;margin-right:auto">Most wanderers don't make it this far. If you want to build something, collab on a hackathon, or talk edits — the way out is also the way in.</p>
+      <div class="btns" style="justify-content:center"><a class="btn" href="https://github.com/Addysaur" target="_blank" rel="noopener">GitHub — Addysaur ↗</a><a class="btn ghost" href="https://www.instagram.com/whattfduo_" target="_blank" rel="noopener">Instagram — @whattfduo_ ↗</a></div>
+      <p class="meta" style="margin-top:20px">End of tape · If you hear humming behind you, keep scrolling up</p>
+    </div></div>
+  </section>
+</main>
+<footer><span>© 2026 Advait — Liminal Portfolio</span><span>Custom 3D engine · No libraries · Scroll = Movement</span></footer>
+
+<script>
+(function(){
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* ---------- Panel reveal (robust: IO + safety sweep) ---------- */
+  var panels=[].slice.call(document.querySelectorAll('.panel'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.05,rootMargin:'120px 0px'});
+    panels.forEach(function(p){io.observe(p)});
+  } else { panels.forEach(function(p){p.classList.add('in')}); }
+  setTimeout(function(){panels.forEach(function(p){p.classList.add('in')})},2500);
+
+  /* ---------- HUD / level state ---------- */
+  var sections=[].slice.call(document.querySelectorAll('section[data-level]'));
+  var levelEl=document.getElementById('levelName'), coordEl=document.getElementById('coords'),
+      fillEl=document.getElementById('depthFill'), txtEl=document.getElementById('depthTxt'), hintEl=document.getElementById('hint');
+  var currentTheme=0, scrollProg=0;
+  function hud(){
+    var y=window.scrollY, max=document.documentElement.scrollHeight-window.innerHeight;
+    scrollProg=max>0?Math.min(1,y/max):0;
+    var pct=Math.round(scrollProg*100);
+    fillEl.style.width=pct+'%'; txtEl.textContent=pct+'%';
+    hintEl.style.opacity = y>80 ? '0':'1';
+    var mid=y+window.innerHeight*.45, best=sections[0];
+    sections.forEach(function(s){ if(s.offsetTop<=mid) best=s; });
+    if(best){ levelEl.textContent=best.getAttribute('data-level'); currentTheme=+best.getAttribute('data-theme'); }
+    levelEl.style.color = currentTheme===5 ? '#ff6a4d' : '';
+  }
+  window.addEventListener('scroll',hud,{passive:true}); hud();
+
+  /* ================================================================
+     CUSTOM 3D ENGINE — real perspective projection on Canvas 2D.
+     No libraries. The world is ~450 units of corridor split into
+     7 themed dimensions; scroll drives the camera through all of it.
+     ================================================================ */
+  var canvas=document.getElementById('scene'), ctx=canvas.getContext('2d');
+  var W=0,H=0,DPR=1;
+  function resize(){ DPR=Math.min(window.devicePixelRatio||1,2); W=window.innerWidth; H=window.innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; }
+  window.addEventListener('resize',resize); resize();
+
+  function hex(c){return [c>>16&255, c>>8&255, c&255]}
+  function mix(a,b,n){return [a[0]+(b[0]-a[0])*n, a[1]+(b[1]-a[1])*n, a[2]+(b[2]-a[2])*n]}
+  function css(c,a){return 'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+(a==null?1:a)+')'}
+  function shade(c,n){return [c[0]*n,c[1]*n,c[2]*n]}
+
+  var THEMES=[
+    {wall:hex(0xb8a44e),floor:hex(0x7d6c2c),ceil:hex(0xd8c878),accent:hex(0xfff3b0),bg:hex(0x171503)},
+    {wall:hex(0x6f6f6c),floor:hex(0x434341),ceil:hex(0x8a8a86),accent:hex(0xe8e8e2),bg:hex(0x0b0b0b)},
+    {wall:hex(0x55483a),floor:hex(0x35302a),ceil:hex(0x5f5344),accent:hex(0xffb35c),bg:hex(0x0d0906)},
+    {wall:hex(0xdfe8e6),floor:hex(0xa9c6c0),ceil:hex(0xf2f7f5),accent:hex(0xbdf0ff),bg:hex(0x0a1416)},
+    {wall:hex(0x3a3f4a),floor:hex(0x22252d),ceil:hex(0x4a505e),accent:hex(0xc3d0ff),bg:hex(0x07080d)},
+    {wall:hex(0x8e2320),floor:hex(0x4a0f0d),ceil:hex(0xb03932),accent:hex(0xff2d1e),bg:hex(0x160202)},
+    {wall:hex(0xe8e8e4),floor:hex(0xbfbfb6),ceil:hex(0xffffff),accent:hex(0x39d97e),bg:hex(0x0b100b)}
+  ];
+  var SEG=64, COUNT=7, faces=[], lights=[];
+  function quad(p1,p2,p3,p4,color,sh){ faces.push({p:[p1,p2,p3,p4], c:shade(color,sh==null?1:sh)}); }
+  function box3(x,y,z,w,h,d,color){
+    var x2=x+w,y2=y+h,z2=z+d;
+    quad([x,y2,z],[x2,y2,z],[x2,y2,z2],[x,y2,z2],color,1.02);          /* top */
+    quad([x,y,z2],[x2,y,z2],[x2,y,z],[x,y,z],color,.5);               /* bottom */
+    quad([x,y,z],[x,y,z2],[x,y2,z2],[x,y2,z],color,.82);              /* left */
+    quad([x2,y,z2],[x2,y,z],[x2,y2,z],[x2,y2,z2],color,.82);          /* right */
+    quad([x,y,z2],[x2,y,z2],[x2,y2,z2],[x,y2,z2],color,.95);          /* front */
+    quad([x2,y,z],[x,y,z],[x,y2,z],[x2,y2,z],color,.7);               /* back */
+  }
+  for(var s=0;s<COUNT;s++){
+    var t=THEMES[s], z0=-s*SEG, z1=z0-SEG;
+    quad([-8,0,z1],[8,0,z1],[8,0,z0],[-8,0,z0],t.floor,.62);                       /* floor */
+    quad([-8,4.6,z0],[8,4.6,z0],[8,4.6,z1],[-8,4.6,z1],t.ceil,1.05);               /* ceiling */
+    quad([-8,0,z0],[-8,0,z1],[-8,4.6,z1],[-8,4.6,z0],t.wall,.8);                   /* left wall */
+    quad([8,0,z1],[8,0,z0],[8,4.6,z0],[8,4.6,z1],t.wall,.8);                       /* right wall */
+    /* carpet / tile centre strip for depth cue */
+    quad([-2.6,0.01,z1],[2.6,0.01,z1],[2.6,0.01,z0],[-2.6,0.01,z0],t.wall,.45);
+    if(s<COUNT-1){
+      quad([-8,0,z1],[-1.6,0,z1],[-1.6,4.6,z1],[-8,4.6,z1],t.wall,.92);
+      quad([1.6,0,z1],[8,0,z1],[8,4.6,z1],[1.6,4.6,z1],t.wall,.92);
+      quad([-1.6,3.4,z1],[1.6,3.4,z1],[1.6,4.6,z1],[-1.6,4.6,z1],t.wall,.92);
+    } else {
+      quad([-8,0,z1],[8,0,z1],[8,4.6,z1],[-8,4.6,z1],t.wall,.95);
+      quad([-1.6,0,z1+.15],[1.6,0,z1+.15],[1.6,4.2,z1+.15],[-1.6,4.2,z1+.15],hex(0x1d7a3a),1.25); /* glowing exit door */
+    }
+    for(var i=0;i<8;i++){
+      var pz=z0-4-i*7.5;
+      box3(-7.1,0,pz-.5,1,4.6,1,t.wall); box3(6.1,0,pz-.5,1,4.6,1,t.wall);
+      var li={x:0,y:4.55,z:pz,accent:t.accent,seg:s,flick:1};
+      lights.push(li);
+      quad([-1.7,4.56,pz-.55],[1.7,4.56,pz-.55],[1.7,4.56,pz+.55],[-1.7,4.56,pz+.55],t.accent,1.7);
+      faces[faces.length-1].lightRef=li;
+    }
+    if(s===0){ for(var b=0;b<4;b++) box3(-5.5+b*3.4,.0,z1+3,2.4,1.05,1.1,hex(0x8f7c33)); }       /* lobby blocks */
+    if(s===2){ for(var pp=0;pp<3;pp++) box3(-7.8,3.9-pp*.5,z1,1.1,.28,SEG,hex(0x8a5a26)); box3(6.7,4.15,z1,1.1,.28,SEG,hex(0x8a5a26)); } /* pipes */
+    if(s===3){ quad([-5.5,.1,z1+4],[5.5,.1,z1+4],[5.5,.1,z0-4],[-5.5,.1,z0-4],hex(0x63c8de),1.15); } /* pool */
+    if(s===4){ for(var st=0;st<12;st++) box3(-4.5,st*.06,z1+6+st*4.4,9,.24,2.2,hex(0x2c3038)); } /* stair hints */
+    if(s===5){ for(var hd=0;hd<5;hd++){ box3(-7.9,0,z1+6+hd*12,.5,3.2,2.2,hex(0x5c130f)); box3(7.4,0,z1+6+hd*12,.5,3.2,2.2,hex(0x5c130f)); } box3(-1.8,0,z1+22,3.6,.8,1.6,hex(0x3d0a08)); box3(2.9,0,z1+44,2.2,.55,1.1,hex(0x3d0a08)); } /* red room: hospital door frames + gurneys */
+    if(s===COUNT-1){ box3(-.9,0,z1+9,.28,3.4,1.8,hex(0x2b2b28)); box3(.62,0,z1+9,.28,3.4,1.8,hex(0x2b2b28)); } /* exit frame posts */
+  }
+  /* dust motes */
+  var dust=[]; for(var d=0;d<260;d++) dust.push({x:(Math.random()-.5)*14,y:.3+Math.random()*4,z:8-Math.random()*COUNT*SEG,ph:Math.random()*6.28});
+
+  /* ---------- Entities (Backrooms canon, matched per level) ----------
+     Bodies are boxes rebuilt every frame, so they genuinely roam the
+     3D corridor. Smilers are glow sprites that surface in the dark. */
+  var entities=[
+    {name:'BACTERIA', seg:0, kind:'human', mode:'patrol', col:0x171410, h:3.3, tw:.3, arm:.05, x:-2.5, z:-30, dir:1, sp:.7, ph:1.3},
+    {name:'SMILER', seg:0, kind:'smiler', mode:'float', x:2.2, z:-38, vis:0, visT:5, on:false, ph:2.1},
+    {name:'SKIN-STEALER', seg:1, kind:'human', mode:'patrol', col:0xcabfa8, h:1.95, tw:.52, arm:.5, x:3.4, z:-96, dir:-1, sp:.55, ph:.4},
+    {name:'SCRATCHER', seg:2, kind:'quad', mode:'burst', col:0x241d18, x:-3, z:-150, sp:1, ph:5.2, idle:2, gx:-3, gz:-150},
+    {name:'HYDROLITIS PLAGUE', seg:3, kind:'shimmer', mode:'still', x:0, z:-224, ph:0},
+    {name:'DULLER', seg:4, kind:'human', mode:'stalk', col:0x596068, h:2.0, tw:.55, arm:.5, x:1.5, z:-286, dir:1, sp:.34, ph:3.3},
+    {name:'HOUND', seg:5, kind:'quad', mode:'chase', col:0x1c0f0d, x:-3.5, z:-352, dir:1, sp:2.7, ph:.9},
+    {name:'SKIN-STEALER', seg:5, kind:'human', mode:'chase', col:0xd8c9ae, h:1.95, tw:.52, arm:.5, x:3.6, z:-366, dir:-1, sp:2.1, ph:2.8},
+    {name:'FACELING', seg:5, kind:'human', mode:'chase', col:0x9aa0a8, head:0xe8e2d4, h:1.9, tw:.5, arm:.52, x:.5, z:-376, dir:1, sp:1.8, ph:4.4},
+    {name:'MUTANT SMILER', seg:5, kind:'smiler', mode:'float', mutant:true, x:-1.5, z:-380, vis:1, visT:9, on:true, ph:1.7}
+  ];
+  var blackout=0, nextBlackout=9, glitchI=0, nextGlitch=3, glitchUntil=0, near=0, strobeF=6.5;
+  function eQuad(list,p1,p2,p3,p4,color,sh){ list.push({p:[p1,p2,p3,p4], c:shade(color,sh==null?1:sh)}); }
+  function eBox(list,x,y,z,w,h,d,colI){
+    var c=hex(colI), x2=x+w,y2=y+h,z2=z+d;
+    eQuad(list,[x,y2,z],[x2,y2,z],[x2,y2,z2],[x,y2,z2],c,1.02);
+    eQuad(list,[x,y,z2],[x2,y,z2],[x2,y,z],[x,y,z],c,.5);
+    eQuad(list,[x,y,z],[x,y,z2],[x,y2,z2],[x,y2,z],c,.82);
+    eQuad(list,[x2,y,z2],[x2,y,z],[x2,y2,z],[x2,y2,z2],c,.82);
+    eQuad(list,[x,y,z2],[x2,y,z2],[x2,y2,z2],[x,y2,z2],c,.95);
+    eQuad(list,[x2,y,z],[x,y,z],[x,y2,z],[x2,y2,z],c,.7);
+  }
+  function buildEntity(E,list,t){
+    var x=E.x, z=E.z, bob=reduced?0:Math.sin(t*2.2+E.ph)*.04;
+    if(E.kind==='human'){
+      var h=E.h, tw=E.tw, legH=h*.46;
+      eBox(list, x-tw*.34, 0, z-.09, .15, legH, .18, E.col);
+      eBox(list, x+tw*.34-.15, 0, z-.09, .15, legH, .18, E.col);
+      eBox(list, x-tw/2, legH, z-.13, tw, h*.32, .26, E.col);
+      var armTop=legH+h*.3, armBot=h*(E.arm==null?.5:E.arm);
+      eBox(list, x-tw/2-.17, armBot, z-.08, .11, armTop-armBot, .16, E.col);
+      eBox(list, x+tw/2+.06, armBot, z-.08, .11, armTop-armBot, .16, E.col);
+      eBox(list, x-.16, h*.8+bob, z-.16, .32, h*.2, .32, E.head!=null?E.head:E.col);
+    } else if(E.kind==='quad'){
+      var by=.42+Math.abs(bob);
+      eBox(list, x-.3, by, z-.55, .6, .48, 1.1, E.col);
+      eBox(list, x-.17, by+.18, z+.5, .34, .34, .3, E.col);
+      eBox(list, x-.26, 0, z-.45, .13, by, .13, E.col);
+      eBox(list, x+.13, 0, z-.45, .13, by, .13, E.col);
+      eBox(list, x-.26, 0, z+.32, .13, by, .13, E.col);
+      eBox(list, x+.13, 0, z+.32, .13, by, .13, E.col);
+    }
+  }
+  function updEntities(dt,t,camX,camZ){
+    for(var i=0;i<entities.length;i++){
+      var E=entities[i], z0=-E.seg*SEG, lo=z0-SEG+5, hi=z0-5;
+      if(E.mode==='patrol'){
+        var spd=E.sp*(blackout>0&&E.seg===1?3.2:1); /* Skin-Stealer turns aggressive in darkness */
+        E.z+=E.dir*spd*dt; if(E.z<lo){E.z=lo;E.dir=1} if(E.z>hi){E.z=hi;E.dir=-1}
+        E.x=Math.sin(t*.25+E.ph)*3.4;
+      } else if(E.mode==='burst'){ /* Scratcher: stillness, then a dash toward sound */
+        E.idle-=dt;
+        var dx=E.gx-E.x, dz=E.gz-E.z, dd=Math.sqrt(dx*dx+dz*dz);
+        if(E.idle<=0 && dd>.4){ E.x+=dx/dd*7*dt; E.z+=dz/dd*7*dt; }
+        else if(E.idle<=0){ E.idle=1.4+Math.random()*2.6; E.gx=-5+Math.random()*10; E.gz=lo+Math.random()*(hi-lo); }
+      } else if(E.mode==='stalk'){ /* Duller: slow, patient, closes in but keeps its distance */
+        if(Math.abs(camZ-E.z)<70){
+          var tgt=Math.max(lo,Math.min(hi,camZ+10)), df=tgt-E.z;
+          E.z+=Math.sign(df)*Math.min(Math.abs(df),E.sp*dt); E.x=Math.sin(t*.18+E.ph)*2.6;
+        } else { E.z+=E.dir*E.sp*.6*dt; if(E.z<lo){E.z=lo;E.dir=1} if(E.z>hi){E.z=hi;E.dir=-1} }
+      } else if(E.mode==='chase'){ /* red-room horde: pursues the camera inside Level ! */
+        var camIn=camZ<z0+16 && camZ>z0-SEG-16, gx,gz;
+        if(camIn){ gx=Math.max(-5.4,Math.min(5.4,camX)); gz=Math.max(lo,Math.min(hi,camZ+6.5)); }
+        else { gx=Math.sin(t*.3+E.ph)*3.6; gz=(lo+hi)/2+Math.sin(t*.22+E.ph)*(hi-lo)*.32; }
+        var dx2=gx-E.x, dz2=gz-E.z, dd2=Math.sqrt(dx2*dx2+dz2*dz2);
+        if(dd2>.05){ var mv=Math.min(dd2,E.sp*dt*(camIn?1:.4)); E.x+=dx2/dd2*mv; E.z+=dz2/dd2*mv; }
+      } else if(E.mode==='float'){ /* Smilers: fade in and out, drift toward you while visible */
+        E.visT-=dt;
+        if(E.visT<=0){ E.on=!E.on; E.visT=E.mutant?(E.on?6+Math.random()*4:1+Math.random()*1.5):(E.on?2.2+Math.random()*2.4:5+Math.random()*8); }
+        if(blackout>0 && !E.mutant){ E.on=true; E.visT=Math.max(E.visT,.5); }
+        E.vis+=((E.on?1:0)-E.vis)*Math.min(1,dt*2.2);
+        E.x+=Math.sin(t*.4+E.ph)*.35*dt;
+        if(E.on){ var tz3=Math.max(lo,Math.min(hi,camZ+11)); E.z+=(tz3-E.z)*Math.min(1,dt*.25); }
+      }
+    }
+    if(t>nextBlackout){ blackout=.9+Math.random()*.9; nextBlackout=t+11+Math.random()*14; }
+    if(blackout>0) blackout-=dt;
+  }
+  function lightDim(L,t){
+    var d=1;
+    if(flickLeft>0 && lights[flickIdx]===L) d=.25;
+    if(blackout>0) d*=.2;
+    if(L.seg===5) d*=(Math.sin(t*strobeF)>0?1:.08); /* red-room alarm strobe */
+    return d;
+  }
+  /* ---------- Glitch: RGB split + slice tearing on a frame snapshot ---------- */
+  var gCan=document.createElement('canvas'), rCan=document.createElement('canvas'), cCan=document.createElement('canvas');
+  function tintCopy(src,dst,fill){
+    var c2=dst.getContext('2d'); c2.setTransform(1,0,0,1,0,0); c2.globalCompositeOperation='source-over'; c2.globalAlpha=1;
+    c2.drawImage(src,0,0); c2.globalCompositeOperation='multiply'; c2.fillStyle=fill; c2.fillRect(0,0,dst.width,dst.height);
+  }
+  function applyGlitch(inten){
+    var pw=canvas.width, ph2=canvas.height;
+    [gCan,rCan,cCan].forEach(function(c){ if(c.width!==pw){c.width=pw;c.height=ph2;} });
+    var gc=gCan.getContext('2d'); gc.setTransform(1,0,0,1,0,0); gc.globalCompositeOperation='source-over'; gc.globalAlpha=1; gc.drawImage(canvas,0,0);
+    tintCopy(gCan,rCan,'#ff0000'); tintCopy(gCan,cCan,'#00ffff');
+    ctx.setTransform(1,0,0,1,0,0);
+    var dx=(2+inten*7)*DPR;
+    ctx.globalCompositeOperation='screen'; ctx.globalAlpha=.55;
+    ctx.drawImage(rCan,-dx,0); ctx.drawImage(cCan,dx,0);
+    ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+    var slices=4+(inten*8|0);
+    for(var i=0;i<slices;i++){
+      var sy=Math.random()*ph2, sh=(2+Math.random()*22*inten)*DPR, ox=(Math.random()-.5)*90*inten*DPR;
+      ctx.drawImage(gCan,0,sy,pw,sh,ox,sy,pw,sh);
+      if(Math.random()<.4) ctx.drawImage(Math.random()<.5?rCan:cCan,0,sy,pw,sh,ox*1.6,sy,pw,sh);
+    }
+    if(Math.random()<.3*inten){ ctx.fillStyle='rgba(255,255,255,'+(.05+Math.random()*.1*inten)+')'; ctx.fillRect(0,Math.random()*ph2,pw,2*DPR); }
+  }
+
+  var mx=0,my=0,tx=0,ty=0;
+  window.addEventListener('pointermove',function(e){ tx=e.clientX/window.innerWidth-.5; ty=e.clientY/window.innerHeight-.5; },{passive:true});
+  function lerp(a,b,n){return a+(b-a)*n}
+  var smoothZ=8, roll=0, bgCur=THEMES[0].bg.slice(), frame=0, flickIdx=-1, flickLeft=0;
+
+  function project(px,py,pz,cam,f,rollC,rollS,yawC,yawS){
+    var x=px-cam.x, y=py-cam.y, z=pz-cam.z;
+    /* yaw around Y, then pitch around X (small angles from mouse) */
+    var x1=x*yawC - (-z)*yawS, z1=(-z)*yawC + x*yawS; /* view depth = z1 */
+    var y1=y;
+    /* roll around view axis */
+    var xr=x1*rollC - y1*rollS, yr=x1*rollS + y1*rollC;
+    var d=Math.max(z1,.45);
+    return [W/2 + xr*f/d, H/2 - yr*f/d, z1];
+  }
+  function render(now){
+    requestAnimationFrame(render);
+    var t=now*.001; frame++;
+    var dt=Math.min(.05,(now-(render._p||now))/1000); render._p=now;
+    var targetZ=lerp(8,-(COUNT*SEG)+13,scrollProg);
+    smoothZ=lerp(smoothZ,targetZ,.07);
+    mx=lerp(mx,tx,.05); my=lerp(my,ty,.05);
+    var th=THEMES[currentTheme]||THEMES[0];
+    bgCur=mix(bgCur,th.bg,.045);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle=css(bgCur); ctx.fillRect(0,0,W,H);
+    var sway=reduced?0:Math.sin(t*.7)*.1;
+    var cam={x:mx*1.5+sway, y:1.68-my*.55+(reduced?0:Math.sin(t*1.25)*.035), z:smoothZ};
+    updEntities(dt,t,cam.x,cam.z);
+    near=0;
+    for(var ni=0;ni<entities.length;ni++){ var NE=entities[ni]; if(NE.kind==='shimmer') continue; var ndx=NE.x-cam.x, ndz=NE.z-cam.z, nd=Math.sqrt(ndx*ndx+ndz*ndz); if(NE.kind==='smiler') nd+=(1-NE.vis)*30; var nv=Math.max(0,Math.min(1,1-(nd-3)/24)); if(nv>near) near=nv; }
+    strobeF=6.5+near*7;
+    roll=lerp(roll, mx*-.05 + Math.sin(scrollProg*Math.PI*5)*.03, .05);
+    var fov=(72+Math.sin(scrollProg*Math.PI)*10)*Math.PI/180;
+    var f=(H/2)/Math.tan(fov/2);
+    var rollC=Math.cos(roll),rollS=Math.sin(roll);
+    var yaw=-mx*.09, yawC=Math.cos(yaw), yawS=Math.sin(yaw);
+    /* fluorescent flicker bookkeeping */
+    if(!reduced && frame%7===0 && Math.random()<.09){ flickIdx=Math.floor(Math.random()*lights.length); flickLeft=2; }
+    /* project + sort faces (painter's algorithm) */
+    var draw=[];
+    for(var i=0;i<faces.length;i++){
+      var fc=faces[i], pts=[], sum=0, behind=true;
+      for(var j=0;j<4;j++){ var P=fc.p[j]; var pr=project(P[0],P[1],P[2],cam,f,rollC,rollS,yawC,yawS); pts.push(pr); sum+=pr[2]; if(pr[2]>.45) behind=false; }
+      var avg=sum/4; if(behind||avg>95) continue;
+      draw.push({pts:pts,avg:avg,c:fc.c,lr:fc.lightRef});
+    }
+    /* entity bodies join the same painter's-algorithm pass */
+    var eFaces=[];
+    for(var ei=0;ei<entities.length;ei++){ var EN=entities[ei]; if(EN.kind==='human'||EN.kind==='quad') buildEntity(EN,eFaces,t); }
+    for(var fi=0;fi<eFaces.length;fi++){
+      var ef=eFaces[fi], epts=[], esum=0, eb=true;
+      for(var fj=0;fj<4;fj++){ var EP=ef.p[fj]; var epr=project(EP[0],EP[1],EP[2],cam,f,rollC,rollS,yawC,yawS); epts.push(epr); esum+=epr[2]; if(epr[2]>.45) eb=false; }
+      var eavg=esum/4; if(eb||eavg>95) continue;
+      draw.push({pts:epts,avg:eavg,c:ef.c,lr:null});
+    }
+    draw.sort(function(a,b){return b.avg-a.avg});
+    for(var k=0;k<draw.length;k++){
+      var dr=draw[k], fogN=Math.min(1,Math.max(0,(dr.avg-5)/48));
+      var col=mix(dr.c,bgCur,fogN*.92);
+      if(dr.lr){ var dm=lightDim(dr.lr,t); if(dm<1) col=shade(col,dm); }
+      ctx.beginPath();
+      ctx.moveTo(dr.pts[0][0],dr.pts[0][1]);
+      for(var m=1;m<4;m++) ctx.lineTo(dr.pts[m][0],dr.pts[m][1]);
+      ctx.closePath(); ctx.fillStyle=css(col); ctx.fill();
+    }
+    if(flickLeft>0) flickLeft--;
+    /* light glow sprites */
+    ctx.globalCompositeOperation='lighter';
+    for(var g=0;g<lights.length;g++){
+      var L=lights[g], pr2=project(L.x,L.y,L.z,cam,f,rollC,rollS,yawC,yawS);
+      if(pr2[2]<1||pr2[2]>30) continue;
+      var r=(H*.55)/pr2[2]*1.7, dim=lightDim(L,t);
+      var gr=ctx.createRadialGradient(pr2[0],pr2[1],0,pr2[0],pr2[1],r);
+      gr.addColorStop(0,css(L.accent,.20*dim*(1-pr2[2]/34))); gr.addColorStop(1,css(L.accent,0));
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(pr2[0],pr2[1],r,0,6.283); ctx.fill();
+    }
+    ctx.globalCompositeOperation='source-over';
+    /* dust */
+    ctx.fillStyle='rgba(255,243,176,.65)';
+    for(var q=0;q<dust.length;q++){
+      var D=dust[q], dy=D.y+(reduced?0:Math.sin(t*.6+D.ph)*.08);
+      var pd=project(D.x,dy,D.z,cam,f,rollC,rollS,yawC,yawS);
+      if(pd[2]<1||pd[2]>40) continue;
+      var sz=Math.max(.6,3.2/pd[2]); ctx.fillRect(pd[0],pd[1],sz,sz);
+    }
+    /* entity sprites: Smiler faces + Hydrolitis shimmer on the pool water */
+    for(var si=0;si<entities.length;si++){
+      var SE=entities[si];
+      if(SE.kind==='smiler'){
+        if(SE.vis<.03) continue;
+        var sp2=project(SE.x,1.75,SE.z,cam,f,rollC,rollS,yawC,yawS);
+        if(sp2[2]<1.5||sp2[2]>55) continue;
+        var ss=(H*1.05)/sp2[2]*(SE.mutant?1.5:1), sx=sp2[0], sy=sp2[1];
+        var scol=SE.mutant?'255,74,52':'240,240,225';
+        ctx.save(); ctx.globalAlpha=SE.vis*(SE.mutant?.95:.85);
+        var sg=ctx.createRadialGradient(sx,sy,0,sx,sy,ss*1.3);
+        sg.addColorStop(0,'rgba('+scol+',.35)'); sg.addColorStop(1,'rgba('+scol+',0)');
+        ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sx,sy,ss*1.3,0,6.283); ctx.fill();
+        ctx.fillStyle='rgba('+scol+',1)';
+        ctx.beginPath(); ctx.ellipse(sx-ss*.2,sy-ss*.12,ss*.07,ss*.11,0,0,6.283); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(sx+ss*.2,sy-ss*.12,ss*.07,ss*.11,0,0,6.283); ctx.fill();
+        ctx.strokeStyle='rgba('+scol+',1)'; ctx.lineWidth=Math.max(1.4,ss*.05); ctx.lineCap='round';
+        ctx.beginPath();
+        if(SE.mutant){ for(var mi=0;mi<=6;mi++){ var mxp=sx-ss*.3+ss*.6*mi/6, myp=sy+ss*.16+Math.sin(mi*2.4)*ss*.05+(mi===0||mi===6?-ss*.1:0); if(mi===0) ctx.moveTo(mxp,myp); else ctx.lineTo(mxp,myp); } }
+        else ctx.arc(sx,sy+ss*.02,ss*.3,Math.PI*.18,Math.PI*.82);
+        ctx.stroke(); ctx.restore();
+      } else if(SE.kind==='shimmer'){
+        ctx.globalCompositeOperation='lighter';
+        for(var hp=0;hp<5;hp++){
+          var hx=Math.sin(hp*2.7+t*.11)*3.6, hz=SE.z+Math.cos(hp*1.9+t*.07)*16;
+          var hp2=project(hx,.14,hz,cam,f,rollC,rollS,yawC,yawS);
+          if(hp2[2]<1||hp2[2]>42) continue;
+          var hr=(H*.4)/hp2[2]*(1.4+hp*.3), ha=.05+.05*Math.sin(t*.8+hp*1.7);
+          if(ha<=0) continue;
+          var hg=ctx.createRadialGradient(hp2[0],hp2[1],0,hp2[0],hp2[1],hr);
+          hg.addColorStop(0,'rgba(120,255,205,'+ha+')'); hg.addColorStop(1,'rgba(120,255,205,0)');
+          ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(hp2[0],hp2[1],hr,0,6.283); ctx.fill();
+        }
+        ctx.globalCompositeOperation='source-over';
+      }
+    }
+    /* entity name labels */
+    ctx.textAlign='center';
+    for(var li2=0;li2<entities.length;li2++){
+      var LE=entities[li2]; if(LE.kind==='shimmer') continue;
+      if(LE.kind==='smiler' && LE.vis<.35) continue;
+      var lh=LE.kind==='smiler'?2.6:(LE.h||1.2)+.45;
+      var lp=project(LE.x,lh,LE.z,cam,f,rollC,rollS,yawC,yawS);
+      if(lp[2]<2||lp[2]>46) continue;
+      if(lp[0]<-70||lp[0]>W+70||lp[1]<-30||lp[1]>H+30) continue;
+      var lname=(LE.seg===5?'⚠ ':'')+LE.name;
+      ctx.font='700 10px "IBM Plex Mono",monospace';
+      var twd=ctx.measureText(lname).width;
+      ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(lp[0]-twd/2-6,lp[1]-16,twd+12,15);
+      ctx.fillStyle=LE.seg===5?'#ff8a75':'rgba(255,243,176,.95)';
+      ctx.fillText(lname,lp[0],lp[1]-5);
+    }
+    /* glitch: random bursts everywhere, constant tear in the red room, worse when an entity is close */
+    if(t>nextGlitch){ glitchUntil=t+.12+Math.random()*.35; nextGlitch=t+(currentTheme===5?.4+Math.random()*1.4:2.5+Math.random()*5.5); }
+    var gTarget=(t<glitchUntil)?.6+Math.random()*.4:0;
+    if(near>.45) gTarget=Math.max(gTarget,(near-.45)*1.2*(Math.random()<.6?1:.25));
+    if(currentTheme===5) gTarget=Math.max(gTarget,.2);
+    glitchI+=(gTarget-glitchI)*.55;
+    if(glitchI>.04 && !reduced) applyGlitch(glitchI);
+    document.body.classList.toggle('glitching',glitchI>.3);
+    coordEl.textContent='X '+cam.x.toFixed(1)+' · Y '+cam.y.toFixed(1)+' · Z '+cam.z.toFixed(1);
+  }
+  requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>
